@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reserve your seat — AI Outreach Workshop</title>
+  <meta name="description" content="One step from booking your seat in the AI Outreach Workshop. £149, 4 hours live on Zoom, Friday 8 May 2026." />
+  <meta name="robots" content="noindex" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="register-body">
+  <div class="atmosphere" aria-hidden="true">
+    <div class="atmosphere__orb atmosphere__orb--blue"></div>
+    <div class="atmosphere__orb atmosphere__orb--violet"></div>
+    <div class="atmosphere__grid"></div>
+    <div class="atmosphere__noise"></div>
+  </div>
+
+  <main class="register">
+    <a href="./index.html" class="register__back" aria-label="Back to workshop details">
+      <span aria-hidden="true">←</span> Back
+    </a>
+
+    <div class="register__card glass-card">
+      <div class="register__eyebrow">
+        <span class="register__eyebrow-dot" aria-hidden="true"></span>
+        Live on Zoom · Friday 8 May 2026
+      </div>
+
+      <h1 class="register__title">You're one step away.</h1>
+      <p class="register__sub">Quick details, then straight to payment.</p>
+
+      <ul class="register__summary">
+        <li>4 hours live on Zoom — Friday 8 May 2026, 11am–3pm BST</li>
+        <li>Build leads, write scripts, set up booking</li>
+        <li>Full recording in Discord afterwards</li>
+      </ul>
+
+      <form id="register-form" class="form" novalidate>
+        <div class="form__group">
+          <label for="name" class="form__label">Your name</label>
+          <input type="text" id="name" name="name" class="form__input" required autocomplete="name" placeholder="Jane Doe" />
+        </div>
+
+        <div class="form__group">
+          <label for="email" class="form__label">Email</label>
+          <input type="email" id="email" name="email" class="form__input" required autocomplete="email" placeholder="you@email.com" />
+        </div>
+
+        <div class="form__group">
+          <label for="challenge" class="form__label">
+            Your biggest challenge <span class="form__optional">optional</span>
+          </label>
+          <textarea id="challenge" name="challenge" class="form__textarea" rows="3" placeholder="e.g. I can build the tech but I've never booked a meeting."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--xl form__submit">
+          <span class="form__submit-label">Continue to payment — £149</span>
+          <span class="form__submit-loading" aria-hidden="true">Redirecting…</span>
+        </button>
+
+        <p class="form__error" id="form-error" role="alert" aria-live="polite"></p>
+      </form>
+
+      <p class="form__hint">Secure payment via Stripe · Full refund up to 48h before</p>
+    </div>
+  </main>
+
+  <script>
+    // Form submits to /api/register (Cloudflare Pages Function)
+    // which pushes the subscriber to Beehiiv server-side, then
+    // we redirect to Stripe with email prefilled.
+    const STRIPE_URL = 'https://buy.stripe.com/fZudR1ai5akjfnC7yT6EU0c';
+
+    const form = document.getElementById('register-form');
+    const submitBtn = form.querySelector('.form__submit');
+    const errorEl = document.getElementById('form-error');
+
+    function setLoading(loading) {
+      submitBtn.classList.toggle('is-loading', loading);
+      submitBtn.disabled = loading;
+    }
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      setLoading(false);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.textContent = '';
+
+      const name = form.name.value.trim();
+      const email = form.email.value.trim();
+      const challenge = form.challenge.value.trim() || null;
+
+      if (!name) return showError('Please enter your name.');
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return showError('Please enter a valid email.');
+      }
+
+      setLoading(true);
+
+      const payload = {
+        name,
+        email,
+        challenge,
+        workshop: 'AI Outreach Workshop — Friday 8 May 2026',
+        source: 'register_page',
+        timestamp: new Date().toISOString(),
+      };
+
+      // Persist for the thank-you page greeting
+      try { sessionStorage.setItem('workshop_registration', JSON.stringify(payload)); } catch {}
+
+      // POST to /api/register (server-side Beehiiv push, hides API key).
+      // Best-effort — we never block payment on this.
+      try {
+        await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.warn('Register endpoint failed — proceeding to payment', err);
+      }
+
+      // Redirect to Stripe with email prefilled
+      const stripeUrl = `${STRIPE_URL}?prefilled_email=${encodeURIComponent(email)}`;
+      window.location.href = stripeUrl;
+    });
+  </script>
+</body>
+</html>

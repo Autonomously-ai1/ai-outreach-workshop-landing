@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OG Image — AI Outreach Workshop</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    background: #010417;
+    color: #eaefff;
+  }
+  .stage {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(11,111,228,0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(39,2,250,0.4) 0%, transparent 55%),
+      linear-gradient(180deg, #010417 0%, #030a2a 50%, #050e33 100%);
+  }
+  .stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  .inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    padding: 56px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 22px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 9999px;
+    font-family: 'DM Mono', ui-monospace, monospace;
+    font-size: 18px;
+    letter-spacing: 0.06em;
+    color: #9aa6d4;
+  }
+  .chip .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #70b6fa;
+    box-shadow: 0 0 10px rgba(112,182,250,0.5);
+  }
+
+  .hosts {
+    display: flex;
+  }
+  .host {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 8px 24px -6px rgba(11,111,228,0.4);
+  }
+  .host + .host { margin-left: -20px; }
+  .host img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .title {
+    font-weight: 700;
+    font-size: 68px;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    max-width: 980px;
+  }
+  .title .accent {
+    display: block;
+    margin-top: 10px;
+    background: linear-gradient(135deg, #70b6fa 0%, #2702fa 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-style: italic;
+    font-size: 56px;
+  }
+
+  .footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'DM Mono', ui-monospace, monospace;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9aa6d4;
+  }
+  .meta .big {
+    color: white;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .price__amount {
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    background: linear-gradient(135deg, #70b6fa 0%, #2702fa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .price__label {
+    font-family: 'DM Mono', ui-monospace, monospace;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9aa6d4;
+  }
+
+  .brand {
+    position: absolute;
+    top: 70px;
+    right: 80px;
+    font-family: 'DM Mono', ui-monospace, monospace;
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #6272a4;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="inner">
+      <div class="header">
+        <div class="chip">
+          <span class="dot"></span>
+          LIVE ON ZOOM · FRIDAY 8 MAY 2026 · 11–3 BST
+        </div>
+        <div class="hosts">
+          <div class="host"><img src="./rory-avatar.png" alt="Rory" /></div>
+          <div class="host"><img src="./mohammed.png" alt="Mohammed" /></div>
+        </div>
+      </div>
+
+      <h1 class="title">
+        Watch Mohammed scrape, cold call, and book meetings... live.
+        <span class="accent">Book your first 5 alongside.</span>
+      </h1>
+
+      <div class="footer">
+        <div class="meta">
+          <div>AI Outreach Workshop</div>
+          <div class="big">4 hours live · 20 seats</div>
+        </div>
+        <div class="price">
+          <div class="price__amount">£149</div>
+          <div class="price__label">one-time</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand">AUTONOMOUSLY AI</div>
+  </div>
+</body>
+</html>

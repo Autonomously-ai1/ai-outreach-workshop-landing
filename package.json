@@ -1,0 +1,9 @@
+{
+  "name": "ai-outreach-workshop-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Landing page + serverless backend for the AI Outreach Workshop (Autonomously AI)",
+  "engines": {
+    "node": ">=18"
+  }
+}
