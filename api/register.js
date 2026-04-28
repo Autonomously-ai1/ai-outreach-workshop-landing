@@ -1,11 +1,10 @@
 // Vercel Serverless Function — POST /api/register
-// Receives form submissions from register.html, pushes the subscriber into Beehiiv
-// with the "outreach workshop" tag + custom fields populated.
-// Always returns success to the client so they proceed to Stripe even if Beehiiv hiccups.
+// Receives form submissions from register.html, creates a Beehiiv subscriber with
+// custom fields populated — but DOES NOT add the "outreach workshop" tag.
 //
-// Beehiiv flow is 2 calls:
-//   1. POST /subscriptions     — creates subscriber + custom fields
-//   2. POST /subscriptions/{id}/tags — attaches the "outreach workshop" tag
+// The tag is only attached after Stripe payment success (see api/stripe-webhook.js).
+// This way the Beehiiv automation that fires on the tag won't trigger until they've
+// actually paid — preventing premature confirmation emails to non-payers.
 //
 // Custom fields must exist on the publication first (created via dashboard or API).
 // We use display names: "First Name", "Full Name", "Workshop Challenge".
@@ -13,12 +12,9 @@
 // Required env vars:
 //   BEEHIIV_API_KEY         — Beehiiv personal API key
 //   BEEHIIV_PUBLICATION_ID  — pub_xxxxxxxx (Beehiiv → Settings → Publications)
-//   BEEHIIV_AUTOMATION_ID   — (optional) automation ID to enrol new subscribers
 //
 // Request body:  { name, email, challenge?, workshop?, source?, timestamp? }
 // Response:      { success: true } (always — never blocks the user from paying)
-
-const WORKSHOP_TAG = 'outreach workshop';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -90,40 +86,10 @@ export default async function handler(req, res) {
 
       if (!beehiivRes.ok) {
         console.warn('Beehiiv subscribe failed:', beehiivRes.status, await beehiivRes.text());
-      } else {
-        const subData = await beehiivRes.json();
-        const subId = subData?.data?.id;
-
-        // Step 2: Attach the "outreach workshop" tag (separate endpoint required by Beehiiv)
-        if (subId) {
-          await fetch(
-            `https://api.beehiiv.com/v2/publications/${encodeURIComponent(publicationId)}/subscriptions/${encodeURIComponent(subId)}/tags`,
-            {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ tags: [WORKSHOP_TAG] }),
-            }
-          ).catch((err) => console.warn('Beehiiv tag attach failed:', err.message));
-        }
-
-        // Step 3 (optional): enrol in Beehiiv automation if configured
-        if (subId && process.env.BEEHIIV_AUTOMATION_ID) {
-          await fetch(
-            `https://api.beehiiv.com/v2/publications/${encodeURIComponent(publicationId)}/automations/${encodeURIComponent(process.env.BEEHIIV_AUTOMATION_ID)}/journeys`,
-            {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ subscription_id: subId }),
-            }
-          ).catch(() => {/* best-effort */});
-        }
       }
+      // NOTE: tag attachment intentionally omitted here.
+      // The "outreach workshop" tag is added by /api/stripe-webhook AFTER successful payment,
+      // which is what triggers the confirmation email automation in Beehiiv.
     } else {
       console.warn('Beehiiv env vars missing — skipping subscriber push');
     }
