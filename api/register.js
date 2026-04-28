@@ -1,6 +1,14 @@
 // Vercel Serverless Function — POST /api/register
-// Receives form submissions from register.html, pushes the subscriber into Beehiiv.
+// Receives form submissions from register.html, pushes the subscriber into Beehiiv
+// with the "outreach workshop" tag + custom fields populated.
 // Always returns success to the client so they proceed to Stripe even if Beehiiv hiccups.
+//
+// Beehiiv flow is 2 calls:
+//   1. POST /subscriptions     — creates subscriber + custom fields
+//   2. POST /subscriptions/{id}/tags — attaches the "outreach workshop" tag
+//
+// Custom fields must exist on the publication first (created via dashboard or API).
+// We use display names: "First Name", "Full Name", "Workshop Challenge".
 //
 // Required env vars:
 //   BEEHIIV_API_KEY         — Beehiiv personal API key
@@ -9,6 +17,8 @@
 //
 // Request body:  { name, email, challenge?, workshop?, source?, timestamp? }
 // Response:      { success: true } (always — never blocks the user from paying)
+
+const WORKSHOP_TAG = 'outreach workshop';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -50,6 +60,7 @@ export default async function handler(req, res) {
     const publicationId = process.env.BEEHIIV_PUBLICATION_ID;
 
     if (apiKey && publicationId) {
+      // Step 1: Create the subscriber with custom fields
       const beehiivPayload = {
         email,
         reactivate_existing: true,
@@ -59,10 +70,9 @@ export default async function handler(req, res) {
         utm_campaign: 'beta_cohort_may_2026',
         referring_site: 'workshop.autonomously-ai.com',
         custom_fields: [
-          { name: 'first_name', value: name.split(/\s+/)[0] },
-          { name: 'full_name', value: name },
-          { name: 'workshop_challenge', value: challenge || '' },
-          { name: 'workshop_signup_date', value: new Date().toISOString() },
+          { name: 'First Name', value: name.split(/\s+/)[0] },
+          { name: 'Full Name', value: name },
+          { name: 'Workshop Challenge', value: challenge || '' },
         ],
       };
 
@@ -80,10 +90,27 @@ export default async function handler(req, res) {
 
       if (!beehiivRes.ok) {
         console.warn('Beehiiv subscribe failed:', beehiivRes.status, await beehiivRes.text());
-      } else if (process.env.BEEHIIV_AUTOMATION_ID) {
+      } else {
         const subData = await beehiivRes.json();
         const subId = subData?.data?.id;
+
+        // Step 2: Attach the "outreach workshop" tag (separate endpoint required by Beehiiv)
         if (subId) {
+          await fetch(
+            `https://api.beehiiv.com/v2/publications/${encodeURIComponent(publicationId)}/subscriptions/${encodeURIComponent(subId)}/tags`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ tags: [WORKSHOP_TAG] }),
+            }
+          ).catch((err) => console.warn('Beehiiv tag attach failed:', err.message));
+        }
+
+        // Step 3 (optional): enrol in Beehiiv automation if configured
+        if (subId && process.env.BEEHIIV_AUTOMATION_ID) {
           await fetch(
             `https://api.beehiiv.com/v2/publications/${encodeURIComponent(publicationId)}/automations/${encodeURIComponent(process.env.BEEHIIV_AUTOMATION_ID)}/journeys`,
             {
